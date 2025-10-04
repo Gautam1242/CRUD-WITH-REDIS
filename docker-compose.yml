@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: gautam
+      POSTGRES_DB: client_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  backend:
+    build: ./crud-backend
+    container_name: backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./crud-backend/.env.docker   # use docker env
+    depends_on:
+      - postgres
+    command: ["./wait-for-postgres.sh", "postgres", "npm", "run", "server"]
+    networks:
+      - app-network
+
+  frontend:
+    build: ./crud-frontend-v1
+    container_name: frontend
+    ports:
+      - "3000:80"
+    env_file:
+      - ./crud-frontend-v1/.env.docker   # use docker env
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
